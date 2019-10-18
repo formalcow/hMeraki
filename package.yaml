@@ -1,0 +1,56 @@
+name:                hMeraki
+version:             0.1.0.0
+github:              "githubuser/hMeraki"
+license:             BSD3
+author:              "jake bowers"
+maintainer:          "formalcow@gmail.com"
+copyright:           "2019 jake bowers"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Meraki Dashboard API object types
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/githubuser/hMeraki#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- scientific
+- aeson
+- casing
+- aeson-pretty
+- lens
+- lens-aeson
+- wreq
+- bytestring
+
+library:
+  source-dirs: src
+  #
+  #executables:
+  #  hMeraki-exe:
+  #    main:                Main.hs
+  #    source-dirs:         app
+  #    ghc-options:
+  #    - -threaded
+  #    - -rtsopts
+  #    - -with-rtsopts=-N
+  #    dependencies:
+  #    - hMeraki
+
+tests:
+  hMeraki-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - hMeraki
