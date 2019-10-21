@@ -77,8 +77,20 @@ ssidFile = "hMeraki_ssid.txt"
 envOrgId :: IO String
 envOrgId = readFile $ resourceDir <> orgFile
 
+mkEnvOrg :: MerakiOrg -> IO ()
+mkEnvOrg o = do
+  h <- openFile (resourceDir <> orgFile) WriteMode
+  hPutStr h (orgId o)
+  hClose h
+
 envNetId :: IO String
 envNetId = readFile $ resourceDir <> netFile
+
+mkEnvNet :: MerakiNetwork -> IO ()
+mkEnvNet n = do
+  h <- openFile (resourceDir <> netFile) WriteMode
+  hPutStr h (networkId n)
+  hClose h
 
 baseURL  = "https://api.meraki.com/api/v0"
 
@@ -88,123 +100,43 @@ baseOpts = do
   return $ defaults & header "X-Cisco-Meraki-API-Key" .~ [myKey]
                     & header "Content-Type" .~ ["application/json"]
 
-merakiBaseGet :: String -> IO (Response CL.ByteString)
-merakiBaseGet url = do
+merakiApiGet :: String -> IO (Response CL.ByteString)
+merakiApiGet url = do
   opts <- baseOpts
   getWith opts $ baseURL <> url
 
-merakiBasePost :: Postable p => String -> p -> IO (Response CL.ByteString)
-merakiBasePost url params = do
+merakiApiPost :: Postable p => String -> p -> IO (Response CL.ByteString)
+merakiApiPost url params = do
   opts <- baseOpts
   postWith opts (baseURL <> url) params
-
 
 -- response processor: extract response body, parse JSON for
 -- a value (declared type a) and grab the Just value
 -- unsafe/incomplete/partial because fromJust fails on Nothings
-extractAPI :: FromJSON a => Response CL.ByteString -> a
-extractAPI resp = fromJust . decode $ (resp ^. responseBody)
-
-
----- Writers:
----- write API endpoints to local filesystem locations
---bsnl :: CL.ByteString
---bsnl = CL.singleton '\n'
---
---localWrite :: CL.ByteString -> FilePath -> IO ()
---localWrite s fp = withFile fp WriteMode (flip CL.hPut s)
---
---writeOrg :: MerakiOrg -> IO ()
---writeOrg o = localWrite (encodePretty o) orgFile
---
---writeNet :: MerakiNetwork -> IO ()
---writeNet n = localWrite (encodePretty n) netFile
---
---writeDev :: [MerakiDevice] -> IO ()
---writeDev ds = localWrite (encodePretty ds) devFile
---
---writeSsid :: [MerakiSsid] -> IO ()
---writeSsid ss = localWrite (encodePretty ss) ssidFile
---
--- Getters --
--- local: fetch endpoint objects from local filesystem:
---localMerakiOrg :: IO MerakiOrg
---localMerakiOrg = do
---    s <- CL.readFile orgFile
---    return $ fromJust (decode s :: Maybe MerakiOrg)
---
---localMerakiNet :: IO MerakiNetwork
---localMerakiNet = do
---    s <- CL.readFile netFile
---    return $ fromJust (decode s :: Maybe MerakiNetwork)
---
---localMerakiDev :: IO [MerakiDevice]
---localMerakiDev = do
---    s <- CL.readFile devFile
---    return $ fromJust (decode s :: Maybe [MerakiDevice])
---
---localMerakiSsid :: IO [MerakiSsid]
---localMerakiSsid = do
---    s <- CL.readFile ssidFile
---    return $ fromJust (decode s :: Maybe [MerakiSsid])
---
--- cloud getters: pulls down baseOrg and baseNet from cloud
--- pulls down devices and ssids from baseNet
+processAPI :: FromJSON a => Response CL.ByteString -> a
+processAPI resp = fromJust . decode $ (resp ^. responseBody)
 
 cloudMerakiOrg :: IO MerakiOrg
 cloudMerakiOrg = do
-    myOrgId <- envOrgId
-    r' <- merakiBaseGet "/organizations"
-    return $ fromJust . findOrg myOrgId $ (extractAPI r' :: [MerakiOrg])
+  myOrgId <- envOrgId
+  r' <- merakiApiGet $ "/organization/" <> myOrgId
+  return $ (processAPI r' :: MerakiOrg)
 
 cloudMerakiNet :: IO MerakiNetwork
 cloudMerakiNet = do
-    myNetId <- envNetId
-    r' <- cloudMerakiOrg
-    r  <- merakiBaseGet $ "/organizations/" <> orgId r' <> "/networks"
-    return $ fromJust . findNet myNetId $ (extractAPI r :: [MerakiNetwork])
+  myNetId <- envNetId
+  r' <- cloudMerakiOrg
+  r  <- merakiApiGet $ "/organizations/" <> orgId r' <> "/networks"
+  return $ fromJust . findNet myNetId $ (processAPI r :: [MerakiNetwork])
 
 cloudMerakiDev :: IO [MerakiDevice]
 cloudMerakiDev = do
-    r' <- cloudMerakiNet
-    r  <- merakiBaseGet $ "/networks/" <> networkId r' <> "/devices"
-    return $ (extractAPI r :: [MerakiDevice]) 
+  r' <- cloudMerakiNet
+  r  <- merakiApiGet $ "/networks/" <> networkId r' <> "/devices"
+  return $ (processAPI r :: [MerakiDevice]) 
 
 cloudMerakiSsid :: IO [MerakiSsid]
 cloudMerakiSsid = do
-    r' <- cloudMerakiNet
-    r  <- merakiBaseGet $ "/networks/" <> networkId r' <> "/ssids"
-    return $ (extractAPI r :: [MerakiSsid])
-
--- cache individual endpoints from the cloud to local filesystem locations:
---cacheOrg :: IO ()
---cacheOrg = cloudMerakiOrg >>= writeOrg
---
---cacheNet :: IO ()
---cacheNet = cloudMerakiNet >>= writeNet
---
---cacheDev :: IO ()
---cacheDev = cloudMerakiDev >>= writeDev
---
---cacheSsid :: IO ()
---cacheSsid = cloudMerakiSsid >>= writeSsid
---
---walkingCache :: IO ()
---walkingCache = do
---  myOrg          <- cloudMerakiOrg
---  netResp        <- merakiBaseGet $ "/organizations/" <> orgId myOrg <> "/networks"
---  let myNet      = fromJust $ findNet baseNet $ (extractAPI netResp :: [MerakiNetwork])
---  devResp        <- merakiBaseGet $ "/networks/" <> networkId myNet <> "/devices"
---  let myDevs     = (extractAPI devResp :: [MerakiDevice])
---  ssidResp       <- merakiBaseGet $ "/networks/" <> networkId myNet <> "/ssids"
---  let mySsids    = (extractAPI ssidResp :: [MerakiSsid])
---  CL.putStrLn . encodePretty $ myOrg
---  CL.putStrLn . encodePretty $ myNet
---  CL.putStrLn . encodePretty $ myDevs
---  CL.putStrLn . encodePretty $ mySsids
---  writeOrg myOrg
---  writeNet myNet
---  writeDev myDevs
---  writeSsid mySsids
---
-
+  r' <- cloudMerakiNet
+  r  <- merakiApiGet $ "/networks/" <> networkId r' <> "/ssids"
+  return $ (processAPI r :: [MerakiSsid])
