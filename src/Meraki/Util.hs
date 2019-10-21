@@ -3,7 +3,7 @@
 module Meraki.Util where
 
 import GHC.Generics
-import Control.Lens
+import Control.Lens ((^.), (.~), (&))
 import Control.Monad
 import Data.List (isPrefixOf)
 import Data.Maybe (fromJust)
@@ -12,13 +12,11 @@ import Data.Functor
 import Data.Semigroup ((<>))
 import Data.Scientific
 import Data.Aeson
-import Data.Aeson.Lens
-import Data.Aeson.Encode.Pretty
 import System.IO
 import qualified Data.ByteString.Lazy.Char8 as CL
 import qualified Data.ByteString.Char8 as C
 import Network.Wreq
-import Network.Wreq.Types
+import qualified Network.Wreq.Types as W
 import Meraki.Types
 
 -- Utility functions:
@@ -40,11 +38,8 @@ findNet i (n:ns) = if networkId n == i
                        else findNet i ns
 findNet _ _      = Nothing
 
-isMV :: MerakiDevice -> Bool
-isMV d = "MV" `isPrefixOf` deviceModel d
-
-isMR :: MerakiDevice -> Bool
-isMR d = "MR" `isPrefixOf` deviceModel d
+isModel :: MerakiDevice -> MerakiModel -> Bool
+isModel d m = (show m) `isPrefixOf` deviceModel d
 
 -- Resources:
 -- Files: local filesystem locations for API endpoint data
@@ -94,7 +89,7 @@ mkEnvNet n = do
 
 baseURL  = "https://api.meraki.com/api/v0"
 
-baseOpts :: IO Network.Wreq.Types.Options
+baseOpts :: IO W.Options
 baseOpts = do
   myKey <- myAPIKey
   return $ defaults & header "X-Cisco-Meraki-API-Key" .~ [myKey]
@@ -105,7 +100,7 @@ merakiApiGet url = do
   opts <- baseOpts
   getWith opts $ baseURL <> url
 
-merakiApiPost :: Postable p => String -> p -> IO (Response CL.ByteString)
+merakiApiPost :: W.Postable p => String -> p -> IO (Response CL.ByteString)
 merakiApiPost url params = do
   opts <- baseOpts
   postWith opts (baseURL <> url) params
@@ -116,27 +111,26 @@ merakiApiPost url params = do
 processAPI :: FromJSON a => Response CL.ByteString -> a
 processAPI resp = fromJust . decode $ (resp ^. responseBody)
 
-cloudMerakiOrg :: IO MerakiOrg
-cloudMerakiOrg = do
+getMerakiOrg :: IO MerakiOrg
+getMerakiOrg = do
   myOrgId <- envOrgId
-  r' <- merakiApiGet $ "/organization/" <> myOrgId
-  return $ (processAPI r' :: MerakiOrg)
+  r' <- merakiApiGet $ "/organizations/" <> myOrgId
+  return (processAPI r' :: MerakiOrg)
 
-cloudMerakiNet :: IO MerakiNetwork
-cloudMerakiNet = do
+getMerakiNet :: IO MerakiNetwork
+getMerakiNet = do
   myNetId <- envNetId
-  r' <- cloudMerakiOrg
-  r  <- merakiApiGet $ "/organizations/" <> orgId r' <> "/networks"
-  return $ fromJust . findNet myNetId $ (processAPI r :: [MerakiNetwork])
+  r  <- merakiApiGet $ "/networks/" <> myNetId
+  return (processAPI r :: MerakiNetwork)
 
-cloudMerakiDev :: IO [MerakiDevice]
-cloudMerakiDev = do
-  r' <- cloudMerakiNet
-  r  <- merakiApiGet $ "/networks/" <> networkId r' <> "/devices"
-  return $ (processAPI r :: [MerakiDevice]) 
+getMerakiDevs :: IO [MerakiDevice]
+getMerakiDevs = do
+  myNetId <- envNetId
+  r  <- merakiApiGet $ "/networks/" <> myNetId <> "/devices"
+  return (processAPI r :: [MerakiDevice]) 
 
-cloudMerakiSsid :: IO [MerakiSsid]
-cloudMerakiSsid = do
-  r' <- cloudMerakiNet
-  r  <- merakiApiGet $ "/networks/" <> networkId r' <> "/ssids"
-  return $ (processAPI r :: [MerakiSsid])
+getMerakiSsids :: IO [MerakiSsid]
+getMerakiSsids = do
+  myNetId <- envNetId
+  r  <- merakiApiGet $ "/networks/" <> myNetId <> "/ssids"
+  return (processAPI r :: [MerakiSsid])

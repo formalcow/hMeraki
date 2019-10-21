@@ -24,9 +24,8 @@ dependencies:
 - scientific
 - aeson
 - casing
-- aeson-pretty
 - lens
-- lens-aeson
+  #[- lens-aeson
 - wreq
 - bytestring
 

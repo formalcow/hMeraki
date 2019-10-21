@@ -118,9 +118,9 @@ instance FromJSON MerakiSsid where
                fieldLabelModifier = merakiSsidLabel }
 
 data MerakiRADIUSServer = MerakiRADIUSServer {
-    mRadiusServerHost                 :: String
-  , mRadiusServerPort                 :: Scientific
-  , mRadiusServerSecret               :: String
+    radiusServerHost                 :: String
+  , radiusServerPort                 :: Scientific
+  , radiusServerSecret               :: String
   } deriving (Generic, Show, Eq)
 
 merakiRadiusServerLabel :: String -> String
@@ -160,7 +160,7 @@ data MerakiDevice = MerakiDevice {
    , deviceLanIp              :: Maybe String
    , deviceTags               :: Maybe String
    , deviceNetworkId          :: String
-   , deviceBeaconIdParams     :: Maybe MerakiBeaconIdParams
+   , deviceBeaconIdParams     :: Maybe BeaconIdParams
    } deriving (Generic, Show, Eq)
 
 merakiDeviceLabel :: String -> String
@@ -173,21 +173,29 @@ instance FromJSON MerakiDevice where
   parseJSON = genericParseJSON defaultOptions {
                fieldLabelModifier = merakiDeviceLabel }
 
-data MerakiBeaconIdParams = MerakiBeaconIdParams {
-     mBeaconUuid              :: String
-   , mBeaconMajor             :: Scientific
-   , mBeaconMinor             :: Scientific
+data MerakiModel
+  = MR
+  | MS
+  | MX
+  | MV
+  | MG
+  deriving (Show, Eq)
+
+data BeaconIdParams = BeaconIdParams {
+     beaconUuid              :: String
+   , beaconMajor             :: Scientific
+   , beaconMinor             :: Scientific
    } deriving (Generic, Show, Eq)
 
-merakiBeaconIdParamsLabel :: String -> String
-merakiBeaconIdParamsLabel = camel . drop 7
+beaconIdParamsLabel :: String -> String
+beaconIdParamsLabel = camel . drop 6
 
-instance ToJSON MerakiBeaconIdParams where
+instance ToJSON BeaconIdParams where
   toJSON = genericToJSON defaultOptions {
-             fieldLabelModifier = merakiBeaconIdParamsLabel }
-instance FromJSON MerakiBeaconIdParams where
+             fieldLabelModifier = beaconIdParamsLabel }
+instance FromJSON BeaconIdParams where
   parseJSON = genericParseJSON defaultOptions {
-                fieldLabelModifier = merakiBeaconIdParamsLabel }
+                fieldLabelModifier = beaconIdParamsLabel }
 
 data MerakiCameraZone = MerakiCameraZone {
      mvZoneZoneId                 :: String
