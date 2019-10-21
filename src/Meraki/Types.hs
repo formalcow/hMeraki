@@ -20,8 +20,8 @@ data MerakiModel
   deriving (Show, Eq)
 
 data MerakiOrg = MerakiOrg {
-    orgId :: String
-  , orgName :: String
+    orgId                  :: String
+  , orgName                :: String
   } deriving (Generic, Show, Eq)
 
 merakiOrgLabel :: String -> String
@@ -36,16 +36,16 @@ instance FromJSON MerakiOrg where
                 fieldLabelModifier =  merakiOrgLabel }
 
 data MerakiAdmin = MerakiAdmin {
-    adminName                 :: String
-  , adminEmail                :: String
-  , adminId                   :: String
-  , adminNetworks             :: [MerakiNetwork]
-  , adminTags                 :: [String]
-  , adminTwoFactorAuthEnabled :: Bool
-  , adminLastActive           :: Scientific
-  , adminAccountStatus        :: String
-  , adminHasApiKey            :: Bool
-  , adminOrgAccess            :: String
+    adminName                  :: String
+  , adminEmail                 :: String
+  , adminId                    :: String
+  , adminNetworks              :: [MerakiNetwork]
+  , adminTags                  :: [String]
+  , adminTwoFactorAuthEnabled  :: Bool
+  , adminLastActive            :: Scientific
+  , adminAccountStatus         :: String
+  , adminHasApiKey             :: Bool
+  , adminOrgAccess             :: String
   } deriving (Generic, Show, Eq)
 
 merakiAdminLabel :: String -> String
@@ -124,9 +124,9 @@ instance FromJSON MerakiSsid where
                fieldLabelModifier = merakiSsidLabel }
 
 data MerakiRADIUSServer = MerakiRADIUSServer {
-    radiusServerHost                 :: String
-  , radiusServerPort                 :: Scientific
-  , radiusServerSecret               :: String
+    radiusServerHost                         :: String
+  , radiusServerPort                         :: Scientific
+  , radiusServerSecret                       :: String
   } deriving (Generic, Show, Eq)
 
 merakiRadiusServerLabel :: String -> String
@@ -140,8 +140,8 @@ instance FromJSON MerakiRADIUSServer where
               fieldLabelModifier = merakiRadiusServerLabel }
 
 data MerakiApTagsAndVlans = MerakiApTagsAndVlans {
-    mApTags                           :: String
-  , mApVlanIds                        :: Scientific
+    mApTags                                      :: String
+  , mApVlanIds                                   :: Scientific
   } deriving (Generic, Show, Eq)
 
 merakiApTagsAndVlansLabel :: String -> String
@@ -155,18 +155,18 @@ instance FromJSON MerakiApTagsAndVlans where
             fieldLabelModifier = merakiApTagsAndVlansLabel }
 
 data MerakiDevice = MerakiDevice {
-     deviceName               :: Maybe String
-   , deviceLat                :: Scientific
-   , deviceLng                :: Scientific
-   , deviceSerial             :: Serial
-   , deviceMac                :: String
-   , deviceModel              :: String
-   , deviceAddress            :: String
-   , deviceNotes              :: Maybe String
-   , deviceLanIp              :: Maybe String
-   , deviceTags               :: Maybe String
-   , deviceNetworkId          :: String
-   , deviceBeaconIdParams     :: Maybe BeaconIdParams
+     deviceName                  :: Maybe String
+   , deviceLat                   :: Scientific
+   , deviceLng                   :: Scientific
+   , deviceSerial                :: Serial
+   , deviceMac                   :: String
+   , deviceModel                 :: String
+   , deviceAddress               :: String
+   , deviceNotes                 :: Maybe String
+   , deviceLanIp                 :: Maybe String
+   , deviceTags                  :: Maybe String
+   , deviceNetworkId             :: String
+   , deviceBeaconIdParams        :: Maybe BeaconIdParams
    } deriving (Generic, Show, Eq)
 
 merakiDeviceLabel :: String -> String
@@ -180,9 +180,9 @@ instance FromJSON MerakiDevice where
                fieldLabelModifier = merakiDeviceLabel }
 
 data BeaconIdParams = BeaconIdParams {
-     beaconUuid              :: String
-   , beaconMajor             :: Scientific
-   , beaconMinor             :: Scientific
+     beaconUuid                      :: String
+   , beaconMajor                     :: Scientific
+   , beaconMinor                     :: Scientific
    } deriving (Generic, Show, Eq)
 
 beaconIdParamsLabel :: String -> String
@@ -196,9 +196,9 @@ instance FromJSON BeaconIdParams where
                 fieldLabelModifier = beaconIdParamsLabel }
 
 data MerakiCameraZone = MerakiCameraZone {
-     mvZoneZoneId                 :: String
-   , mvZoneType                   :: String
-   , mvZoneLabel                  :: String
+     mvZoneZoneId                        :: String
+   , mvZoneType                          :: String
+   , mvZoneLabel                         :: String
    } deriving (Generic, Show, Eq)
 
 merakiCameraZoneLabel :: String -> String
