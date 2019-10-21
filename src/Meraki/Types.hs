@@ -178,7 +178,6 @@ data MerakiModel
   | MS
   | MX
   | MV
-  | MG
   deriving (Show, Eq)
 
 data BeaconIdParams = BeaconIdParams {
