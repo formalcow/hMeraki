@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE DeriveGeneric #-}
 
 module Meraki.Types where
@@ -12,6 +11,13 @@ import Prelude
 
 type Tag = String
 type Serial = String
+
+data MerakiModel
+  = MR
+  | MS
+  | MX
+  | MV
+  deriving (Show, Eq)
 
 data MerakiOrg = MerakiOrg {
     orgId :: String
@@ -172,13 +178,6 @@ instance ToJSON MerakiDevice where
 instance FromJSON MerakiDevice where
   parseJSON = genericParseJSON defaultOptions {
                fieldLabelModifier = merakiDeviceLabel }
-
-data MerakiModel
-  = MR
-  | MS
-  | MX
-  | MV
-  deriving (Show, Eq)
 
 data BeaconIdParams = BeaconIdParams {
      beaconUuid              :: String
