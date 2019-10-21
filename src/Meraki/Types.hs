@@ -54,6 +54,7 @@ merakiAdminLabel =  camel . drop 5
 instance ToJSON MerakiAdmin where
   toJSON = genericToJSON defaultOptions {
              fieldLabelModifier = merakiAdminLabel }
+
 instance FromJSON MerakiAdmin where
   parseJSON = genericParseJSON defaultOptions {
              fieldLabelModifier = merakiAdminLabel }
@@ -76,6 +77,7 @@ merakiNetworkLabel = camel . drop 7
 instance ToJSON MerakiNetwork where
   toJSON = genericToJSON defaultOptions {
              fieldLabelModifier = merakiNetworkLabel }
+
 instance FromJSON MerakiNetwork where
   parseJSON = genericParseJSON defaultOptions {
                 fieldLabelModifier =  merakiNetworkLabel }
@@ -119,6 +121,7 @@ merakiSsidLabel = camel . drop 4
 instance ToJSON MerakiSsid where
   toJSON = genericToJSON defaultOptions {
             fieldLabelModifier = merakiSsidLabel }
+
 instance FromJSON MerakiSsid where
   parseJSON = genericParseJSON defaultOptions {
                fieldLabelModifier = merakiSsidLabel }
@@ -135,6 +138,7 @@ merakiRadiusServerLabel = camel . drop 6
 instance ToJSON MerakiRADIUSServer where
   toJSON = genericToJSON defaultOptions {
             fieldLabelModifier = merakiRadiusServerLabel }
+
 instance FromJSON MerakiRADIUSServer where
   parseJSON = genericParseJSON defaultOptions {
               fieldLabelModifier = merakiRadiusServerLabel }
@@ -150,6 +154,7 @@ merakiApTagsAndVlansLabel = camel . drop 6
 instance ToJSON MerakiApTagsAndVlans where
   toJSON = genericToJSON defaultOptions {
             fieldLabelModifier = merakiApTagsAndVlansLabel }
+
 instance FromJSON MerakiApTagsAndVlans where
   parseJSON = genericParseJSON defaultOptions {
             fieldLabelModifier = merakiApTagsAndVlansLabel }
@@ -175,6 +180,7 @@ merakiDeviceLabel = camel . drop 6
 instance ToJSON MerakiDevice where
   toJSON = genericToJSON defaultOptions {
              fieldLabelModifier = merakiDeviceLabel }
+
 instance FromJSON MerakiDevice where
   parseJSON = genericParseJSON defaultOptions {
                fieldLabelModifier = merakiDeviceLabel }
@@ -191,6 +197,7 @@ beaconIdParamsLabel = camel . drop 6
 instance ToJSON BeaconIdParams where
   toJSON = genericToJSON defaultOptions {
              fieldLabelModifier = beaconIdParamsLabel }
+
 instance FromJSON BeaconIdParams where
   parseJSON = genericParseJSON defaultOptions {
                 fieldLabelModifier = beaconIdParamsLabel }
