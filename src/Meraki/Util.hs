@@ -2,9 +2,7 @@
 
 module Meraki.Util where
 
-import GHC.Generics
 import Control.Lens ((^.), (.~), (&))
-import Control.Monad
 import Data.List (isPrefixOf)
 import Data.Maybe (fromJust)
 import Data.Either (fromRight)
@@ -65,11 +63,14 @@ netFile = "hMeraki_net.txt"
 devFile :: FilePath
 devFile = "hMeraki_dev.txt"
 
+camFile :: FilePath
+camFile = "hMeraki_cam.txt"
+
 ssidFile :: FilePath
 ssidFile = "hMeraki_ssid.txt"
 
 -- Working environment org and network:
-envOrgId :: IO String
+envOrgId :: IO Serial
 envOrgId = readFile $ resourceDir <> orgFile
 
 mkEnvOrg :: MerakiOrg -> IO ()
@@ -78,13 +79,22 @@ mkEnvOrg o = do
   hPutStr h (orgId o)
   hClose h
 
-envNetId :: IO String
+envNetId :: IO Serial
 envNetId = readFile $ resourceDir <> netFile
 
 mkEnvNet :: MerakiNetwork -> IO ()
 mkEnvNet n = do
   h <- openFile (resourceDir <> netFile) WriteMode
   hPutStr h (networkId n)
+  hClose h
+
+envCamId :: IO Serial
+envCamId = readFile $ resourceDir <> camFile
+
+mkEnvCam :: MerakiDevice -> IO ()
+mkEnvCam c = do
+  h <- openFile (resourceDir <> camFile) WriteMode
+  hPutStr h (deviceSerial c)
   hClose h
 
 baseURL  = "https://api.meraki.com/api/v0"
@@ -111,26 +121,40 @@ merakiApiPost url params = do
 processAPI :: FromJSON a => Response CL.ByteString -> a
 processAPI resp = fromJust . decode $ (resp ^. responseBody)
 
-getMerakiOrg :: IO MerakiOrg
-getMerakiOrg = do
+getOrg :: IO MerakiOrg
+getOrg = do
   myOrgId <- envOrgId
   r' <- merakiApiGet $ "/organizations/" <> myOrgId
   return (processAPI r' :: MerakiOrg)
 
-getMerakiNet :: IO MerakiNetwork
-getMerakiNet = do
+getNet :: IO MerakiNetwork
+getNet = do
   myNetId <- envNetId
-  r  <- merakiApiGet $ "/networks/" <> myNetId
-  return (processAPI r :: MerakiNetwork)
+  r'  <- merakiApiGet $ "/networks/" <> myNetId
+  return (processAPI r' :: MerakiNetwork)
 
-getMerakiDevs :: IO [MerakiDevice]
-getMerakiDevs = do
+getDevs :: IO [MerakiDevice]
+getDevs = do
   myNetId <- envNetId
-  r  <- merakiApiGet $ "/networks/" <> myNetId <> "/devices"
-  return (processAPI r :: [MerakiDevice]) 
+  r'  <- merakiApiGet $ "/networks/" <> myNetId <> "/devices"
+  return (processAPI r' :: [MerakiDevice]) 
 
-getMerakiSsids :: IO [MerakiSsid]
-getMerakiSsids = do
+getSsids :: IO [MerakiSsid]
+getSsids = do
   myNetId <- envNetId
-  r  <- merakiApiGet $ "/networks/" <> myNetId <> "/ssids"
-  return (processAPI r :: [MerakiSsid])
+  r'  <- merakiApiGet $ "/networks/" <> myNetId <> "/ssids"
+  return (processAPI r' :: [MerakiSsid])
+
+getMvs :: IO [MerakiDevice]
+getMvs = (filter (flip isModel MV)) <$> getDevs
+
+getMvLive :: Serial -> IO MerakiSense
+getMvLive s = do
+  r' <- merakiApiGet $ "/devices/" <> s <> "/camera/analytics/live"
+  return (processAPI r' :: MerakiSense)
+
+
+getMvZones :: Serial -> IO [MerakiCameraZone]
+getMvZones s = do
+  r' <- merakiApiGet $ "/devices/" <> s <> "/camera/analytics/zones"
+  return (processAPI r' :: [MerakiCameraZone])

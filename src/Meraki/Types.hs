@@ -6,7 +6,6 @@ import GHC.Generics
 import Data.Scientific
 import Data.Aeson
 import Text.Casing
-import Prelude
 
 type Tag = String
 type Serial = String
@@ -217,3 +216,19 @@ instance ToJSON MerakiCameraZone where
 instance FromJSON MerakiCameraZone where
   parseJSON = genericParseJSON defaultOptions {
                 fieldLabelModifier = merakiCameraZoneLabel }
+
+data MerakiSense = MerakiSense {
+     mvSenseTs                 :: String
+   , mvSenseZones              :: Object
+   } deriving (Generic, Show, Eq)
+
+merakiSenseLabel :: String -> String
+merakiSenseLabel = camel . drop 7
+
+instance ToJSON MerakiSense where
+  toJSON = genericToJSON defaultOptions {
+             fieldLabelModifier = merakiSenseLabel }
+
+instance FromJSON MerakiSense where
+  parseJSON = genericParseJSON defaultOptions {
+                fieldLabelModifier = merakiSenseLabel }

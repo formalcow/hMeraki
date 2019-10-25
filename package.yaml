@@ -25,7 +25,6 @@ dependencies:
 - aeson
 - casing
 - lens
-  #[- lens-aeson
 - wreq
 - bytestring
 
