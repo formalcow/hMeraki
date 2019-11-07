@@ -17,7 +17,7 @@ import Network.Wreq
 import qualified Network.Wreq.Types as W
 import Meraki.Types
 
--- Utility functions:
+-- | Utility functions:
 findDevSerial :: Serial -> [MerakiDevice] -> Maybe MerakiDevice
 findDevSerial s (d:ds) = if s == deviceSerial d
                          then Just d
@@ -69,7 +69,7 @@ camFile = "hMeraki_cam.txt"
 ssidFile :: FilePath
 ssidFile = "hMeraki_ssid.txt"
 
--- Working environment org and network:
+-- | Working environment org and network:
 envOrgId :: IO Serial
 envOrgId = readFile $ resourceDir <> orgFile
 
@@ -88,8 +88,8 @@ mkEnvNet n = do
   hPutStr h (networkId n)
   hClose h
 
-envCamId :: IO Serial
-envCamId = readFile $ resourceDir <> camFile
+envCamSerial :: IO Serial
+envCamSerial = readFile $ resourceDir <> camFile
 
 mkEnvCam :: MerakiDevice -> IO ()
 mkEnvCam c = do
@@ -97,7 +97,7 @@ mkEnvCam c = do
   hPutStr h (deviceSerial c)
   hClose h
 
-baseURL  = "https://api.meraki.com/api/v0"
+baseURL  = "https://api-mp.meraki.com/api/v0"
 
 baseOpts :: IO W.Options
 baseOpts = do
@@ -105,11 +105,13 @@ baseOpts = do
   return $ defaults & header "X-Cisco-Meraki-API-Key" .~ [myKey]
                     & header "Content-Type" .~ ["application/json"]
 
+-- | Simple GET request builder:
 merakiApiGet :: String -> IO (Response CL.ByteString)
 merakiApiGet url = do
   opts <- baseOpts
   getWith opts $ baseURL <> url
 
+-- | Simple POST request builder:
 merakiApiPost :: W.Postable p => String -> p -> IO (Response CL.ByteString)
 merakiApiPost url params = do
   opts <- baseOpts
