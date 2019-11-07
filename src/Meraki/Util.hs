@@ -66,6 +66,9 @@ devFile = "hMeraki_dev.txt"
 camFile :: FilePath
 camFile = "hMeraki_cam.txt"
 
+ssidsFile :: FilePath
+ssidsFile = "hMeraki_ssids.txt"
+
 ssidFile :: FilePath
 ssidFile = "hMeraki_ssid.txt"
 
@@ -97,6 +100,15 @@ mkEnvCam c = do
   hPutStr h (deviceSerial c)
   hClose h
 
+envSsidNum :: IO Scientific
+envSsidNum = fmap read $ readFile $ resourceDir <> ssidFile
+
+mkEnvSsidNum :: MerakiSsid -> IO ()
+mkEnvSsidNum s = do
+  h <- openFile (resourceDir <> ssidFile) WriteMode
+  hPutStr h (show $ ssidNumber s)
+  hClose h
+
 baseURL  = "https://api-mp.meraki.com/api/v0"
 
 baseOpts :: IO W.Options
@@ -106,16 +118,21 @@ baseOpts = do
                     & header "Content-Type" .~ ["application/json"]
 
 -- | Simple GET request builder:
-merakiApiGet :: String -> IO (Response CL.ByteString)
-merakiApiGet url = do
+mApiGet :: String -> IO (Response CL.ByteString)
+mApiGet url = do
   opts <- baseOpts
   getWith opts $ baseURL <> url
 
 -- | Simple POST request builder:
-merakiApiPost :: W.Postable p => String -> p -> IO (Response CL.ByteString)
-merakiApiPost url params = do
+mApiPost :: W.Postable p => String -> p -> IO (Response CL.ByteString)
+mApiPost url params = do
   opts <- baseOpts
   postWith opts (baseURL <> url) params
+
+mApiPut :: W.Putable p => String -> p -> IO (Response CL.ByteString)
+mApiPut url params = do
+  opts <- baseOpts
+  putWith opts (baseURL <> url) params
 
 -- response processor: extract response body, parse JSON for
 -- a value (declared type a) and grab the Just value
@@ -126,37 +143,60 @@ processAPI resp = fromJust . decode $ (resp ^. responseBody)
 getOrg :: IO MerakiOrg
 getOrg = do
   myOrgId <- envOrgId
-  r' <- merakiApiGet $ "/organizations/" <> myOrgId
+  r'      <- mApiGet $ "/organizations/" <> myOrgId
   return (processAPI r' :: MerakiOrg)
 
 getNet :: IO MerakiNetwork
 getNet = do
   myNetId <- envNetId
-  r'  <- merakiApiGet $ "/networks/" <> myNetId
+  r'      <- mApiGet $ "/networks/" <> myNetId
   return (processAPI r' :: MerakiNetwork)
 
 getDevs :: IO [MerakiDevice]
 getDevs = do
   myNetId <- envNetId
-  r'  <- merakiApiGet $ "/networks/" <> myNetId <> "/devices"
+  r'      <- mApiGet $ "/networks/" <> myNetId <> "/devices"
   return (processAPI r' :: [MerakiDevice]) 
 
 getSsids :: IO [MerakiSsid]
 getSsids = do
   myNetId <- envNetId
-  r'  <- merakiApiGet $ "/networks/" <> myNetId <> "/ssids"
+  r'      <- mApiGet $ "/networks/" <> myNetId <> "/ssids"
   return (processAPI r' :: [MerakiSsid])
 
 getMvs :: IO [MerakiDevice]
 getMvs = (filter (flip isModel MV)) <$> getDevs
 
-getMvLive :: Serial -> IO MerakiSense
-getMvLive s = do
-  r' <- merakiApiGet $ "/devices/" <> s <> "/camera/analytics/live"
+getMvLive :: IO MerakiSense
+getMvLive = do
+  myCamSerial <- envCamSerial
+  r'          <- mApiGet $ "/devices/" <> myCamSerial <> "/camera/analytics/live"
   return (processAPI r' :: MerakiSense)
 
-
-getMvZones :: Serial -> IO [MerakiCameraZone]
-getMvZones s = do
-  r' <- merakiApiGet $ "/devices/" <> s <> "/camera/analytics/zones"
+getMvZones :: IO [MerakiCameraZone]
+getMvZones = do
+  myCamSerial <- envCamSerial
+  r'          <- mApiGet $ "/devices/" <> myCamSerial <> "/camera/analytics/zones"
   return (processAPI r' :: [MerakiCameraZone])
+
+getSsid :: IO MerakiSsid
+getSsid = do
+  myNetId   <- envNetId
+  mySsidNum <- envSsidNum
+  r'        <- mApiGet $ "/networks/" <> myNetId <> "/ssids/" <> (show mySsidNum)
+  return (processAPI r' :: MerakiSsid)
+
+updateSsid :: (String, String) -> IO (Status)
+updateSsid (field, value) = do
+  myNetId   <- envNetId
+  mySsidNum <- envSsidNum
+  r'        <- mApiPut ("/networks/" <> myNetId <> "/ssids/" <> (show mySsidNum)) $ C.pack ("{\"" <> field <> "\":\"" <> value <> "\"}")
+  return $ r' ^. responseStatus
+
+disableSsid :: IO (Status)
+disableSsid = updateSsid ("enabled", "false")
+
+toggleSsid :: IO (Status)
+toggleSsid = do
+  toggle     <- ssidEnabled <$> getSsid
+  updateSsid ("enabled", (show $ not toggle))   
